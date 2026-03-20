@@ -1,5 +1,5 @@
 /** Current version of the SDK, injected into every event payload. */
-export const SDK_VERSION = "0.3.0"
+export const SDK_VERSION = "0.4.0"
 
 /** Maximum allowed length for event names. */
 export const EVENT_NAME_MAX_LENGTH = 100

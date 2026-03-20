@@ -1,6 +1,6 @@
 {
   "name": "@funelr/events",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Official event tracking SDK for funelr.io",
   "type": "module",
   "exports": {
@@ -35,11 +35,12 @@
     "node": ">=22"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "registry": "https://npm.pkg.github.com"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/funelr/events-sdk.git"
+    "url": "git+https://github.com/funelr/events-sdk.git"
   },
   "keywords": [
     "analytics",
