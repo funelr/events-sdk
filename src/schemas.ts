@@ -8,8 +8,6 @@ import { EVENT_NAME_MAX_LENGTH, SESSION_ID_MAX_LENGTH, URL_MAX_LENGTH } from "./
  * Use this schema on the server or in tests to assert payload correctness.
  */
 export const eventPayloadSchema = z.object({
-  /** Legacy site identifier (v0.2.x). Replaced by `apiKey` in the HTTP header as of v0.3.0. */
-  siteId: z.string().uuid().optional(),
   /** Name of the event, e.g. `"page_view"` or `"cta_click"`. */
   eventName: z.string().min(1).max(EVENT_NAME_MAX_LENGTH),
   /** Persistent visitor identifier stored in `localStorage` (post-consent). */

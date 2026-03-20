@@ -1,41 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
-import { sendBatch, sendLegacy } from "../transport.js"
+import { afterEach, describe, expect, it, vi } from "vitest"
+import { sendBatch } from "../transport.js"
 
-describe("sendLegacy (v0.2.x compat)", () => {
-  beforeEach(() => {
-    vi.stubGlobal("navigator", { sendBeacon: vi.fn(() => true) })
-  })
-
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
-  it("uses sendBeacon when available", () => {
-    sendLegacy({ endpoint: "/api/events", payload: { eventName: "page_view" } })
-    expect(navigator.sendBeacon).toHaveBeenCalledOnce()
-    expect(navigator.sendBeacon).toHaveBeenCalledWith("/api/events", expect.any(Blob))
-  })
-
-  it("falls back to fetch when sendBeacon returns false", () => {
-    vi.stubGlobal("navigator", { sendBeacon: vi.fn(() => false) })
-    const fetchSpy = vi.fn(() => Promise.resolve(new Response()))
-    vi.stubGlobal("fetch", fetchSpy)
-
-    sendLegacy({ endpoint: "/api/events", payload: { eventName: "page_view" } })
-    expect(fetchSpy).toHaveBeenCalledOnce()
-  })
-
-  it("falls back to fetch when sendBeacon is not available", () => {
-    vi.stubGlobal("navigator", {})
-    const fetchSpy = vi.fn(() => Promise.resolve(new Response()))
-    vi.stubGlobal("fetch", fetchSpy)
-
-    sendLegacy({ endpoint: "/api/events", payload: { eventName: "page_view" } })
-    expect(fetchSpy).toHaveBeenCalledOnce()
-  })
-})
-
-describe("sendBatch (v0.3.0+)", () => {
+describe("sendBatch", () => {
   afterEach(() => {
     vi.restoreAllMocks()
   })

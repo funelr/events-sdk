@@ -6,7 +6,7 @@ import {
   getOrCreateAnonymousId,
   getOrCreateSessionId,
 } from "./session.js"
-import { sendBatch, sendLegacy } from "./transport.js"
+import { sendBatch } from "./transport.js"
 
 /** Configuration options for {@link createFunnelClient}. */
 export interface FunnelClientConfig {
@@ -18,17 +18,10 @@ export interface FunnelClientConfig {
   endpoint: string
 
   /**
-   * API key for the project (v0.3.0+). When provided, events are sent as a
-   * batch to `{endpoint}/batch` with an `X-Api-Key` header.
+   * API key for the project. Events are sent as a batch to `{endpoint}/batch`
+   * with an `X-Api-Key` header.
    */
   apiKey?: string
-
-  /**
-   * Legacy site identifier (v0.2.x). Replaced by `apiKey` as of v0.3.0.
-   *
-   * @deprecated Use `apiKey` for new integrations.
-   */
-  siteId?: string
 
   /**
    * Optional allowlist of accepted event names. Events whose name is not
@@ -174,14 +167,12 @@ export function createFunnelClient(config: FunnelClientConfig): FunnelClient {
   function flush(): void {
     if (queue.length === 0) return
     const batch = queue.splice(0, queue.length)
-
-    if (config.apiKey) {
-      sendBatch({ endpoint: config.endpoint, events: batch, apiKey: config.apiKey, maxRetries })
-    } else if (config.siteId) {
-      for (const event of batch) {
-        sendLegacy({ endpoint: config.endpoint, payload: event })
-      }
-    }
+    sendBatch({
+      endpoint: config.endpoint,
+      events: batch,
+      ...(config.apiKey !== undefined ? { apiKey: config.apiKey } : {}),
+      maxRetries,
+    })
   }
 
   function getAnonymousId(): string | undefined {
@@ -212,7 +203,6 @@ export function createFunnelClient(config: FunnelClientConfig): FunnelClient {
       ...(url !== undefined ? { url } : {}),
       ...(referrer !== undefined ? { referrer } : {}),
       ...(properties !== undefined ? { properties } : {}),
-      ...(config.siteId && !config.apiKey ? { siteId: config.siteId } : {}),
     }
 
     queue.push(payload)

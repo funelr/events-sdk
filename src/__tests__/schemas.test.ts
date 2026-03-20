@@ -3,7 +3,6 @@ import { eventPayloadSchema } from "../schemas.js"
 
 describe("eventPayloadSchema", () => {
   const validPayload = {
-    siteId: "550e8400-e29b-41d4-a716-446655440000",
     eventName: "page_view",
   }
 
@@ -14,11 +13,13 @@ describe("eventPayloadSchema", () => {
   it("accepts a full payload", () => {
     const result = eventPayloadSchema.safeParse({
       ...validPayload,
+      anonymousId: "anon-uuid-1234",
       sessionId: "abc-123",
       url: "https://example.com/page",
       referrer: "https://google.com",
       properties: { button: "cta" },
       timestamp: "2025-01-01T00:00:00Z",
+      sdkVersion: "0.3.0",
     })
     expect(result.success).toBe(true)
   })
@@ -27,23 +28,13 @@ describe("eventPayloadSchema", () => {
     expect(eventPayloadSchema.safeParse({ ...validPayload, referrer: "" }).success).toBe(true)
   })
 
-  it("accepts a payload without siteId (v0.3.0+ mode)", () => {
-    expect(eventPayloadSchema.safeParse({ eventName: "click" }).success).toBe(true)
-  })
-
-  it("accepts anonymousId and sdkVersion fields (v0.3.0+)", () => {
+  it("accepts anonymousId and sdkVersion fields", () => {
     const result = eventPayloadSchema.safeParse({
       eventName: "page_view",
       anonymousId: "anon-uuid-1234",
       sdkVersion: "0.3.0",
     })
     expect(result.success).toBe(true)
-  })
-
-  it("rejects an invalid siteId (not a UUID)", () => {
-    expect(eventPayloadSchema.safeParse({ siteId: "not-a-uuid", eventName: "click" }).success).toBe(
-      false,
-    )
   })
 
   it("rejects an empty eventName", () => {

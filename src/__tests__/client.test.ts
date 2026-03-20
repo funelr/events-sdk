@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { createFunnelClient } from "../client.js"
 
-const SITE_ID = "550e8400-e29b-41d4-a716-446655440000"
 const API_KEY = "fjs_live_test1234"
 
 describe("createFunnelClient", () => {
@@ -19,12 +18,12 @@ describe("createFunnelClient", () => {
   })
 
   it("returns undefined sessionId when consent is not given", () => {
-    const client = createFunnelClient({ siteId: SITE_ID, endpoint: "http://localhost/api/events" })
+    const client = createFunnelClient({ apiKey: API_KEY, endpoint: "http://localhost/api/events" })
     expect(client.getSessionId()).toBeUndefined()
   })
 
   it("returns a sessionId when consent is given", () => {
-    const client = createFunnelClient({ siteId: SITE_ID, endpoint: "http://localhost/api/events", consent: true })
+    const client = createFunnelClient({ apiKey: API_KEY, endpoint: "http://localhost/api/events", consent: true })
     expect(client.getSessionId()).toBeDefined()
   })
 
@@ -43,7 +42,7 @@ describe("createFunnelClient", () => {
   })
 
   it("toggles consent at runtime", () => {
-    const client = createFunnelClient({ siteId: SITE_ID, endpoint: "http://localhost/api/events" })
+    const client = createFunnelClient({ apiKey: API_KEY, endpoint: "http://localhost/api/events" })
     expect(client.getSessionId()).toBeUndefined()
 
     client.setConsent(true)
@@ -54,7 +53,7 @@ describe("createFunnelClient", () => {
   })
 
   it("does not send any data when consent is not given", () => {
-    const client = createFunnelClient({ siteId: SITE_ID, endpoint: "http://localhost/api/events" })
+    const client = createFunnelClient({ apiKey: API_KEY, endpoint: "http://localhost/api/events" })
     client.track("page_view")
     client.flush()
     expect(fetchSpy).not.toHaveBeenCalled()
@@ -97,7 +96,7 @@ describe("createFunnelClient", () => {
 
   it("skips tracking when eventName is not in allowlist", () => {
     const client = createFunnelClient({
-      siteId: SITE_ID,
+      apiKey: API_KEY,
       endpoint: "http://localhost/api/events",
       consent: true,
       allowedEventNames: ["page_view"],
@@ -124,7 +123,7 @@ describe("createFunnelClient", () => {
 
   it("uses custom sessionStorageKey", () => {
     const client = createFunnelClient({
-      siteId: SITE_ID,
+      apiKey: API_KEY,
       endpoint: "http://localhost/api/events",
       consent: true,
       sessionStorageKey: "my_project_session",
@@ -138,7 +137,7 @@ describe("createFunnelClient", () => {
 
   it("clears sessionId on consent revocation", () => {
     const client = createFunnelClient({
-      siteId: SITE_ID,
+      apiKey: API_KEY,
       endpoint: "http://localhost/api/events",
       consent: true,
       sessionStorageKey: "my_project_session",

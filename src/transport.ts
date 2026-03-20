@@ -12,11 +12,6 @@ export interface BatchSendOptions {
   maxRetries?: number
 }
 
-/** Options for {@link sendLegacy}. */
-export interface LegacySendOptions {
-  endpoint: string
-  payload: EventPayload
-}
 
 function backoff(attempt: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, Math.min(1000 * 2 ** attempt, 30_000)))
@@ -69,26 +64,3 @@ export function sendBatch({ endpoint, events, apiKey, maxRetries = 3 }: BatchSen
   sendWithRetry(batchEndpoint, body, headers, maxRetries).catch(() => {})
 }
 
-/**
- * Legacy single-event transport compatible with the v0.2.x ingest API.
- *
- * Prefers `navigator.sendBeacon` for reliability during page unload; falls
- * back to `fetch` when sendBeacon is unavailable or returns `false`.
- *
- * @deprecated Use {@link sendBatch} with an `apiKey` for new integrations.
- */
-export function sendLegacy({ endpoint, payload }: LegacySendOptions): void {
-  const body = JSON.stringify(payload)
-
-  if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
-    const blob = new Blob([body], { type: "application/json" })
-    if (navigator.sendBeacon(endpoint, blob)) return
-  }
-
-  fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body,
-    keepalive: true,
-  }).catch(() => {})
-}
