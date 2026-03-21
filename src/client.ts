@@ -7,6 +7,7 @@ import {
   getOrCreateSessionId,
 } from "./session.js"
 import { sendBatch } from "./transport.js"
+import { isAllowedEventName } from "./validation.js"
 
 /** Configuration options for {@link createFunnelClient}. */
 export interface FunnelClientConfig {
@@ -173,6 +174,7 @@ export function createFunnelClient(config: FunnelClientConfig): FunnelClient {
       ...(config.apiKey !== undefined ? { apiKey: config.apiKey } : {}),
       maxRetries,
     })
+    stopTimer()
   }
 
   function getAnonymousId(): string | undefined {
@@ -187,7 +189,7 @@ export function createFunnelClient(config: FunnelClientConfig): FunnelClient {
 
   function track(eventName: string, properties?: Record<string, unknown>): void {
     if (!consentGiven) return
-    if (config.allowedEventNames && !config.allowedEventNames.includes(eventName)) return
+    if (!isAllowedEventName(eventName, config.allowedEventNames)) return
 
     const anonymousId = getAnonymousId()
     const sessionId = getSessionId()
