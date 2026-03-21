@@ -1,0 +1,119 @@
+---
+description: Sets up and instruments @funelr/events SDK tracking in a project. Guides through client initialization, namespaced event design, consent wiring, and adding track() calls. Use when a developer wants to add Funelr analytics, instrument a feature with events, or integrate the @funelr/events package.
+globs:
+alwaysApply: false
+---
+
+# Funelr Events — Setup & Instrumentation
+
+## Phase 1 — Discovery (ask before writing code)
+
+Ask these questions before generating any code:
+
+**1. Namespace**
+Which feature or module to instrument? This becomes the event namespace (e.g. `auth`, `cart`, `onboarding`). All events follow `namespace:action` — e.g. `auth:login`, `cart:add_item`.
+
+**2. Events to track**
+What specific user actions? For each, derive the namespaced event name and identify relevant properties. Example: "user submits login form" → `auth:login` with `{ method: "email" | "oauth", success: boolean }`.
+
+**3. Client already initialized?**
+If not, ask for:
+- API key (format: `fnnl_live_...` or `fnnl_test_...`)
+- Ingest endpoint (e.g. `https://ingest.funelr.io/v1/collect`)
+- Whether to use `allowedEventNames` to enforce the event list at SDK level
+
+**4. Consent**
+How is consent managed?
+- No consent yet → use `consent: true` temporarily, add `// TODO: wire consent`
+- Existing banner/store/hook → ask where to call `setConsent(true/false)`
+- Will be added later → initialize with `consent: false`, annotate where to wire it
+
+**5. Framework** (auto-detect from `package.json`, confirm)
+Next.js / React → singleton module + optional hook
+Vue / Nuxt → singleton module or composable
+Vanilla → singleton module
+
+---
+
+## Phase 2 — Confirm the plan
+
+Before implementing, present:
+- Full list of event names to add (e.g. `auth:login`, `auth:logout`)
+- `allowedEventNames` array if opted in
+- File to create or extend for the client singleton
+- Files that will receive `client.track()` calls
+- How consent will be wired (or TODO location)
+
+Wait for explicit confirmation.
+
+---
+
+## Phase 3 — Implementation order
+
+### 1. Verify installation
+Check `package.json` for `@funelr/events`. If missing, tell the user to install it and stop.
+
+### 2. Client singleton
+
+**Next.js / React** — `src/lib/funelr.ts`:
+```ts
+import { createFunnelClient } from "@funelr/events"
+
+export const funelr = createFunnelClient({
+  endpoint: process.env.NEXT_PUBLIC_FUNELR_ENDPOINT!,
+  apiKey: process.env.NEXT_PUBLIC_FUNELR_API_KEY,
+  consent: false,
+  allowedEventNames: ["namespace:action"], // if opted in
+})
+```
+
+**Vue / Nuxt** — `src/plugins/funelr.ts` or `composables/useFunelr.ts`
+**Vanilla** — `src/funelr.ts`
+
+Always use environment variables. Never hardcode the API key.
+
+### 3. Consent wiring
+
+- **Cookie banner callback** → `funelr.setConsent(true)` on accept, `funelr.setConsent(false)` on revoke
+- **Zustand / Pinia store** → call `funelr.setConsent(value)` in the consent action
+- **React context** → `useEffect` watching consent state
+- **None yet** → `consent: true` + `// TODO: wire consent`
+
+### 4. Tracking calls
+
+Add `funelr.track("namespace:action", { ...properties })` at the right location:
+- Import the singleton, never instantiate a new client
+- Place as close as possible to the user action (button handler, form submit, route change)
+- Keep properties flat and serializable — strings, numbers, booleans only
+- No PII in properties (no email, name, phone)
+
+### 5. Destroy on unmount (SPA only)
+If the client is inside a component (not module-level), call `funelr.destroy()` on cleanup.
+
+---
+
+## Constraints
+
+| Rule | Detail |
+|------|--------|
+| Endpoint format | Do **not** include `/batch` — the SDK appends it automatically |
+| API key | Always from an env var (`NEXT_PUBLIC_`, `VITE_`, etc.) |
+| Batch max | Server accepts 100 events/batch; SDK default of 20 is fine |
+| Event name length | Max 100 characters |
+| `siteId` | Legacy field — never use it |
+| `allowedEventNames` | When set, events not in the list are silently dropped |
+
+---
+
+## Event naming reference
+
+| Namespace | Examples |
+|-----------|---------|
+| `auth:` | `auth:login`, `auth:logout`, `auth:signup` |
+| `page:` | `page:view`, `page:scroll_depth` |
+| `cart:` | `cart:add_item`, `cart:remove_item`, `cart:checkout` |
+| `onboarding:` | `onboarding:step_completed`, `onboarding:skipped` |
+| `ui:` | `ui:modal_opened`, `ui:cta_clicked` |
+| `form:` | `form:submitted`, `form:abandoned` |
+
+Use `snake_case` for both namespace and action. Use past tense for completed actions.
