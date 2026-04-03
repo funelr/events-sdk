@@ -1,0 +1,58 @@
+name: Upload SDK to R2 CDN
+
+on:
+  push:
+    tags:
+      - 'sdk/v*'
+
+jobs:
+  upload-to-r2:
+    runs-on: ubuntu-latest
+
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        working-directory: ./
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Extract version from tag
+        id: version
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          VERSION="${REF_NAME#sdk/v}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload versioned SDK to R2
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          CF_ENDPOINT: https://${{ secrets.CF_ACCOUNT_ID }}.r2.cloudflarestorage.com
+        run: |
+          aws s3 cp dist/funelr-events.iife.js \
+            "s3://funelr-cdn/sdk/v${VERSION}/funelr-events.iife.js" \
+            --endpoint-url "${CF_ENDPOINT}" \
+            --content-type application/javascript \
+            --cache-control "public, max-age=31536000, immutable"
+
+      - name: Upload latest alias to R2
+        env:
+          CF_ENDPOINT: https://${{ secrets.CF_ACCOUNT_ID }}.r2.cloudflarestorage.com
+        run: |
+          aws s3 cp dist/funelr-events.iife.js \
+            s3://funelr-cdn/sdk/latest/funelr-events.iife.js \
+            --endpoint-url "${CF_ENDPOINT}" \
+            --content-type application/javascript \
+            --cache-control "public, max-age=3600"

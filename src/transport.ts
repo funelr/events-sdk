@@ -56,7 +56,8 @@ export function sendBatch({ endpoint, events, apiKey, maxRetries = 3 }: BatchSen
 
   const batchEndpoint = `${endpoint}/batch`
 
-  if (events.length === 1 && typeof navigator?.sendBeacon === "function") {
+  // sendBeacon cannot send custom headers — skip it when apiKey is required
+  if (!apiKey && events.length === 1 && typeof navigator?.sendBeacon === "function") {
     const blob = new Blob([body], { type: "application/json" })
     if (navigator.sendBeacon(batchEndpoint, blob)) return
   }

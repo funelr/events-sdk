@@ -47,6 +47,32 @@ const client = createFunnelClient({
 client.setConsent(true)
 ```
 
+### With a custom domain (ad-block bypass)
+
+On Pro and Scale plans, funelr.io supports routing events through your own subdomain (e.g. `collect.acme.com`). Ad blockers never block first-party requests.
+
+Read the endpoint from an environment variable so switching domains requires no code change:
+
+```ts
+// Next.js / Vite / any bundler
+const client = createFunnelClient({
+  apiKey: process.env.NEXT_PUBLIC_FUNELR_API_KEY!,
+  endpoint: process.env.NEXT_PUBLIC_FUNELR_ENDPOINT ?? "https://ingest.funelr.io/v1/collect",
+})
+```
+
+Then set the variable in your deployment environment:
+
+```bash
+# .env.local (or Vercel / Railway / Netlify environment settings)
+NEXT_PUBLIC_FUNELR_API_KEY=fjs_live_abc123
+NEXT_PUBLIC_FUNELR_ENDPOINT=https://collect.acme.com/v1/collect
+```
+
+No code change needed when you configure or update your custom domain — only the environment variable changes.
+
+> The custom domain and its DNS instructions are available in your project settings on the funelr.io dashboard once the domain is verified.
+
 ## Usage
 
 ### Tracking events

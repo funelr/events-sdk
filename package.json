@@ -1,6 +1,6 @@
 {
   "name": "@funelr/events",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Official event tracking SDK for funelr.io",
   "type": "module",
   "exports": {
@@ -14,7 +14,8 @@
   ],
   "scripts": {
     "prepare": "npm run build",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsc -p tsconfig.build.json && npm run build:iife",
+    "build:iife": "esbuild src/browser.ts --bundle --format=iife --global-name=FunelrSDK --outfile=dist/funelr-events.iife.js --minify --platform=browser --target=es2018",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -28,6 +29,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.0.0",
     "@vitest/coverage-v8": "^3.2.4",
+    "esbuild": "^0.27.5",
     "jsdom": "^28.1.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"

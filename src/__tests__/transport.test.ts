@@ -13,11 +13,24 @@ describe("sendBatch", () => {
     expect(fetchSpy).not.toHaveBeenCalled()
   })
 
-  it("uses sendBeacon for a single event", () => {
+  it("uses sendBeacon for a single event without apiKey", () => {
     vi.stubGlobal("navigator", { sendBeacon: vi.fn(() => true) })
     const event = { eventName: "page_view", anonymousId: "anon-1" }
-    sendBatch({ endpoint: "/api/v1/collect", events: [event], apiKey: "key_test" })
+    sendBatch({ endpoint: "/api/v1/collect", events: [event] })
     expect(navigator.sendBeacon).toHaveBeenCalledWith("/api/v1/collect/batch", expect.any(Blob))
+  })
+
+  it("skips sendBeacon when apiKey is provided (sendBeacon cannot send custom headers)", () => {
+    vi.stubGlobal("navigator", { sendBeacon: vi.fn(() => true) })
+    const fetchSpy = vi.fn(() => Promise.resolve(new Response()))
+    vi.stubGlobal("fetch", fetchSpy)
+    const event = { eventName: "page_view", anonymousId: "anon-1" }
+    sendBatch({ endpoint: "/api/v1/collect", events: [event], apiKey: "key_test" })
+    expect(navigator.sendBeacon).not.toHaveBeenCalled()
+    expect(fetchSpy).toHaveBeenCalledOnce()
+    const [, options] = fetchSpy.mock.calls[0] as unknown as [string, RequestInit]
+    const headers = options.headers as Record<string, string>
+    expect(headers["X-Api-Key"]).toBe("key_test")
   })
 
   it("uses fetch for multiple events", () => {
